@@ -11,7 +11,7 @@ poker_functions_.py :
   Strategy looks like [(0, 1, 1, 0, 0), (0, 1, 1, 1, 0)], a list with each entry giving whether to hold or not.
   
   
- poker_keras_.py
+ poker_keras_.py:
  
   Creates and trains the network on the data created above.
   
