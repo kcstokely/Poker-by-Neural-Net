@@ -17,6 +17,8 @@ poker_functions_.py :
   
   All the magic happens in the model definiton: one can play with the layer sizes and network depth.
   
+  Keras automates all the rest.
+  
   
   
   
