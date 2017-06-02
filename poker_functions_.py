@@ -22,10 +22,10 @@ def compress(inlist):
     
 ### POKER HAND CLASS ######################################################################################################################
 ###
-###   Useful for converting between various internal representations.
+###   Useful for converting between various representations.
 ###
 
-class pHand():
+class pHand(object):
     
     nums = ['A','2','3','4','5','6','7','8','9','T','J','Q','K']
     pics = ['D','C','H','S']
@@ -36,11 +36,25 @@ class pHand():
         self.hand = []
     
     def deal(self):
-        self.hand = random.sample(self.pile, 5)
         self.pile = range(52)
+        self.hand = random.sample(self.pile, 5)
         for c in self.hand:
             self.pile.remove(c)
+            
+    def discard(self, hold):
+        self.hand.sort()
+        for j in range(4,-1,-1):
+            if not hold[j]:
+                del self.hand[j]
                 
+    def refill(self):
+        ext = random.sample(self.pile, 5-len(self.hand))
+        self.hand.extend(ext)
+        for c in ext:
+            self.pile.remove(c)
+        
+    ### in/out
+    
     def read(self, hand):
         self.hand = hand
         self.pile = range(52)
@@ -56,7 +70,10 @@ class pHand():
 
     def readbs(self, bysuit):
         self.hand = [ i*13+j for i,m in enumerate(bysuit) for j in m ]
-    
+        self.pile = range(52)
+        for c in self.hand:
+            self.pile.remove(c)
+
     def readh(self, cards, suits):
         cs = [ nums.index(i) for i in cards ]
         ss = [ pics.index(i) for i in suits ]
@@ -67,12 +84,6 @@ class pHand():
         self.pile = range(52)
         for c in self.hand:
             self.pile.remove(c)
-
-    def discard(self, hold):
-        self.hand.sort()
-        for j in range(4,-1,-1):
-            if not hold[j]:
-                del self.hand[j]            
             
     def cards(self):
         return [ c%13 for c in self.hand ]
@@ -84,10 +95,11 @@ class pHand():
         return [ sorted([ cards[j] for j in range(5) if suits[j]==i ]) for i in range(4) ]
 
     def human(self):
+        self.hand.sort()
         return [ self.pics[self.suits()[i]]+":"+self.nums[self.cards()[i]] for i in range(len(self.hand)) ]
 
     def vector(self):
-        return [ (i in self.hand) for i in range(52) ]
+        return [ int(i in self.hand) for i in range(52) ]
     
 ### SCORES LIST ############################################################################################################################
 
@@ -113,6 +125,7 @@ scores['royal']    = 800
 
 def get_score(hand):
     ### hello
+    assert len(hand.hand)==5
     cards = hand.cards()
     suits = hand.suits()
     ### check similars
@@ -174,7 +187,7 @@ def get_score(hand):
 ###
 ###      contains all (52 choose 5) entries --- no equivalence classes b/c less expensive to store
 ###
-###      out of order hands will need to be sorted before lookup as (52 perm 5) is too big
+###      out of order hands will need to be sorted before lookup --- (52 perm 5) is too big
 ###
 
 def load_score_dict():
@@ -201,9 +214,9 @@ def load_score_dict():
         
 ### EXPECTED RETURN OF A STRATEGY #########################################################################################################
 ###
-###   Takes a freshly dealt pHand instance, and a strategy in (0,1)^5.
+###   Takes a freshly dealt pHand instance, and a strategy in [0,1]^5.
 ###
-###   Returns a float; input is discared after call.
+###   Returns a float; input is left discared after call.
 ###
 
 def expected_return(deal, hold):
@@ -314,16 +327,18 @@ if __name__ == '__main__':
  
     ### params
 
-    number = 100
-    file_orig = './poker_data_.dat'
-    file_boost = './poker_data_boosted_.dat'
+    number     = sys.argv[1]
+    
+    file_orig  = './kcs_data_.dat'
+    
+    file_boost = './kcs_data_boosted_.dat'
 
     ### run
 
+    score = load_score_dict()
+    
     ti = datetime.datetime.now()
     print "\n  Beginning at:", ti, '\n'
-
-    score = load_score_dict()
 
     print 'creating set'
     create_random_training_set(file_orig, number, 1)
